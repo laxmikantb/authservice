@@ -1,0 +1,361 @@
+openapi: 3.0.0
+info:
+  description: The authentication service handles login, logout, and administration of users, their profiles, and their roles.
+  version: 1.0.0
+  title: Authentication Microservice
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://qa.teamawesomemdaschallenge.net/api
+tags:
+- name: role
+  description: User Role management
+- name: login
+  description: Login, Logout, and Password management
+- name: user
+  description: User management
+paths:
+  /roles:
+    get:
+      tags:
+      - role
+      summary: Get all roles
+      operationId: getAllRoles
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      tags:
+      - role
+      summary: Create role
+      operationId: createRole
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        201:
+          description: successful operation
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        409:
+          description: role already exists
+  /roles/{name}:
+    delete:
+      tags:
+      - role
+      summary: Delete role
+      operationId: deleteRole
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+        description: The name of the role
+      responses:
+        204:
+          description: successful operation
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        404:
+          description: Role not found
+  /user/login:
+    post:
+      tags:
+      - login
+      summary: Logs a user into the system, creating a bearer token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsernamePassword'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        400:
+          description: Invalid username/password
+  /user/logout:
+    get:
+      tags:
+      - login
+      summary: Invalidates the supplied Bearer token
+      operationId: logout
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        204:
+          description: Always return a No Content response.
+  /user/profile:
+    get:
+      tags:
+      - login
+      summary: Return the logged in user's details.
+      operationId: getCurrentUser
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+  /user/resetPassword:
+    post:
+      tags:
+      - login
+      summary: Change or set the user password.
+      operationId: resetPassword
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+      responses:
+        204:
+          description: successful operation
+        400:
+          description: Invalid currentPassword, or newPassword does not meet password policy.
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+  /users:
+    get:
+      tags:
+      - user
+      summary: Get all users
+      operationId: getAllUsers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        201:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      tags:
+      - user
+      summary: Create a new user
+      operationId: createUser
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        201:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        409:
+          description: User already exists
+  /users/{username}:
+    get:
+      tags:
+      - user
+      summary: Get user details
+      description: This can only be done by the logged in user or a ROLE_ADMINISTRATOR.
+      operationId: getUser
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+          description: The username of the user
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        400:
+          description: Invalid username
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        404:
+          description: User not found
+    put:
+      tags:
+      - user
+      summary: Update user details
+      description: This can only be done by the logged in user or an administrator.
+      operationId: updateUser
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      parameters:
+      - in: path
+        name: username
+        description: user that should be updated
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        204:
+          description: successful operation
+        400:
+          description: Invalid user
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        404:
+          description: User not found
+    delete:
+      tags:
+      - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      parameters:
+      - in: path
+        name: username
+        description: The username to be deleted
+        required: true
+        schema:
+          type: string
+      responses:
+        204:
+          description: successful operation
+        401:
+          $ref: '#/components/responses/UnauthticatedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        404:
+          description: User not found
+components:
+  securitySchemes:
+    bearerAuth:
+       type: http
+       scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: SESSIONID
+  schemas:
+    ResetPassword:
+      type: object
+      properties:
+        currentPassword:
+          description: The user's current password, not required if they do not have one.
+          nullable: true
+          type: string
+        newPassword:
+          description: The user's new password.
+          type: string
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          example: header.body.signature
+    UserProfile:
+      type: object
+      properties:
+        username:
+          type: string
+          example: johndoe
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: johndoe@email.com
+        phone:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            example: ROLE_USER
+    UsernamePassword:
+      type: object
+      properties:
+        username:
+          description: The user name for login
+          type: string
+          example: johndoe
+        password:
+          description: The password for login
+          type: string
+  responses:
+    UnauthticatedError:
+      description: Bearer token is missing or expired.
+    ForbiddenError:
+      description: User is not authorized for the action.
+

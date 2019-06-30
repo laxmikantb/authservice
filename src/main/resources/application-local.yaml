@@ -1,0 +1,27 @@
+spring:
+  main.allow-bean-definition-overriding: true
+  datasource:
+    url= jdbc:h2:mem:testdb
+    driverClassName= org.h2.Driver
+    username= sa   
+  jpa:
+      database-platform: org.hibernate.dialect.H2Dialect
+      hibernate.ddl-auto: create-drop
+      show-sql: true
+
+microservice:
+  authentication:
+    jwt:
+      secret: my-secret-token-to-change-in-production
+      token-validity-in-milliseconds: 86400000
+
+    cors:
+      allowed-origin: "*"
+      allowed-methods: GET, PUT, POST, DELETE, OPTIONS
+      allowed-headers: "*"
+      exposed-headers:
+      allow-credentials: true
+      max-age: 1800
+
+server:
+  port: 8082
